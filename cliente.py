@@ -4,7 +4,7 @@ from pymongo import *
 
 # CONFIG
 #La ip de tu pc
-mqtt_server = "10.1.105.26"
+mqtt_server = "192.168.140.170"
 #La ip de la base de datos mongodb
 mongodb_ip = "127.0.0.1"
 
