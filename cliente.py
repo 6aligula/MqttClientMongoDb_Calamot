@@ -6,7 +6,7 @@ from pymongo import *
 #La ip de tu pc
 mqtt_server = "192.168.140.170"
 #La ip de la base de datos mongodb
-mongodb_ip = "127.0.0.1"
+mongodb_ip = "mongodb"
 
 def on_connect(client, userdata, flags, rc):
     print(f"Conectado con código de resultado {rc}")
@@ -63,7 +63,7 @@ def sendToMongo(remitente, temperatura, humedad):
     resultado = coleccion.insert_one(documento)
     print(f'Documento insertado con el ID: {resultado.inserted_id}')
 
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
