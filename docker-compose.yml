@@ -6,6 +6,8 @@ services:
       - mongodb
     environment:
       - mongodb_ip=mongodb
+    networks:
+      - mi_red_comun
 
   mongodb:
     image: mongo:4.4
@@ -14,6 +16,12 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: secret
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - mi_red_comun
 
 volumes:
   mongodb_data:
+
+networks:
+  mi_red_comun:
+    external: true
