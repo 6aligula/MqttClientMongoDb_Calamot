@@ -1,16 +1,17 @@
 # Usa una imagen oficial de Python como imagen base
 FROM python:3.9
 
-# Establece el directorio de trabajo en el contenedor
-WORKDIR /usr/src/app
+# Establece un directorio de trabajo
+WORKDIR /app
+
+# Copia los archivos necesarios al contenedor
+COPY . /app
 
 # Instala las dependencias de Python
-# Asume que tienes un archivo requirements.txt con paho-mqtt y pymongo
-COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el script de tu aplicación al directorio de trabajo
-COPY . .
+# Expone el puerto en el que se ejecutará la aplicación
+EXPOSE 5000
 
-# Comando para ejecutar tu aplicación
+# Comando para ejecutar la aplicación
 CMD ["python", "./app.py"]
