@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Comando para ejecutar tu aplicación
-CMD ["python", "./cliente.py"]
+CMD ["python", "./app.py"]
