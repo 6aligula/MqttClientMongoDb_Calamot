@@ -1,17 +1,12 @@
-# Usa una imagen oficial de Python como imagen base
-FROM python:3.9
+# Usa la imagen oficial de Mosquitto como base
+FROM eclipse-mosquitto:latest
 
-# Establece un directorio de trabajo
-WORKDIR /app
+# Copia tu archivo de configuración personalizado
+COPY ./config/mosquitto.conf /mosquitto/config/mosquitto.conf
 
-# Copia los archivos necesarios al contenedor
-COPY . /app
+# Genera dinámicamente el archivo de contraseñas y añade el usuario admin con su contraseña
+RUN touch /mosquitto/config/mosquitto_passwd \
+    && mosquitto_passwd -b /mosquitto/config/mosquitto_passwd admin lokodeldiablo
 
-# Instala las dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Expone el puerto en el que se ejecutará la aplicación
-EXPOSE 5000
-
-# Comando para ejecutar la aplicación
-CMD ["python", "./app.py"]
+# Establece los permisos recomendados para el archivo de contraseñas
+RUN chmod 0700 /mosquitto/config/mosquitto_passwd

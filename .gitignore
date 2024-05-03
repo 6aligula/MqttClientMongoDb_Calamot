@@ -1,0 +1,18 @@
+# Bases de datos y volúmenes de datos
+server/data/*
+
+# Logs
+server/log/*
+
+# Archivos generales que se deben ignorar
+*.log
+*.db
+*.swp
+*~
+
+# Archivos específicos del entorno o herramientas de desarrollo
+.DS_Store
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace

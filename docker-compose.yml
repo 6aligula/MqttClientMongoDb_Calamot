@@ -1,11 +1,15 @@
 version: '3.9'
+
 services:
-  mqtt-client:
-    build: .
+  api:
+    build:
+      context: ./flask
     ports:
       - "5000:5000"
     depends_on:
       - mongodb
+    env_file:  # Añadir esta línea para especificar la ubicación del archivo .env
+      - ./.env  # Ruta del archivo .env
     environment:
       - mongodb_ip=mongodb
     networks:
@@ -14,10 +18,22 @@ services:
   mongodb:
     image: mongo:4.4
     environment:
-      MONGO_INITDB_ROOT_USERNAME: mongoadmin
-      MONGO_INITDB_ROOT_PASSWORD: secret
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - mi_red_comun
+
+  mosquitto:
+    build: .
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./data:/mosquitto/data
+      - ./log:/mosquitto/log
     networks:
       - mi_red_comun
 
@@ -26,4 +42,4 @@ volumes:
 
 networks:
   mi_red_comun:
-    external: true
+    driver: bridge
