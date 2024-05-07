@@ -28,11 +28,11 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode('utf-8')
     if msg.topic == temperatura_topic:
         print(msg.topic + " " + payload)
-        temperature_collection.insert({"temperatura": float(payload)})
+        temperature_collection.insert_one({"temperatura": float(payload)})
 
     elif msg.topic == humedad_topic:
         print(msg.topic + " " + payload)
-        humidity_collection.insert({"humedad": float(payload)})
+        humidity_collection.insert_one({"humedad": float(payload)})
 
 client = create_mqtt_client(on_connect, on_message)
 
