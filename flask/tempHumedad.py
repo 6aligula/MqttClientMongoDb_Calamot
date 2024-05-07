@@ -23,7 +23,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(temperatura_topic)
     client.subscribe(humedad_topic)
 
-# Callback que se llama cuando se recibe un mensaje del servidor.
+# Callback que se llama cuando se recibe un mensaje del servidor. fix erros
 def on_message(client, userdata, msg):
     payload = msg.payload.decode('utf-8')
     if msg.topic == temperatura_topic:
