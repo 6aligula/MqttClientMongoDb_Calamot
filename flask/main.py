@@ -5,6 +5,7 @@ import threading
 from db_config import get_mongo_client, get_database
 from mqtt_config import create_mqtt_client, publish_message
 from settings import Config
+from tempHumedad import setup_temperature_routes
 
 app = Flask(__name__)
 
@@ -70,5 +71,7 @@ def apagar_motor():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+setup_temperature_routes(app)
+
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0')
+    app.run(debug=False, host='0.0.0.0', port=5000)
