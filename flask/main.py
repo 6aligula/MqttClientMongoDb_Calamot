@@ -29,7 +29,6 @@ def on_message(client, userdata, msg):
         print(f"Failed to insert data: {e}")
         
 client = create_mqtt_client(on_connect, on_message)
-client.loop_start()
 
 @app.route('/')
 def index():

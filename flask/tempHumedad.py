@@ -1,33 +1,19 @@
 #tempHumedad.py
 from flask import Flask, jsonify
-import paho.mqtt.client as mqtt
-from pymongo import MongoClient
+from mqtt_config import create_mqtt_client
 import os
+from db_config import get_mongo_client, get_database
 
 # Carga las variables de entorno desde el archivo .env
 app = Flask(__name__)
 
 # Configura los detalles del broker MQTT
-mqtt_broker = os.getenv("MQTT_BROKER")
-mqtt_port = 1883
 temperatura_topic = os.getenv("TEMP_TOPIC")
 humedad_topic = os.getenv("HUME_TOPIC")
 
 # Configuración de MongoDB modificada para usar variables de entorno
-MONGO_INITDB_ROOT_USERNAME = os.getenv("MONGO_INITDB_ROOT_USERNAME")
-MONGO_INITDB_ROOT_PASSWORD = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
-mongodb_ip = os.getenv("mongodb_ip", "mongodb")  # Default a "mongodb" si no se encuentra
-mongo_uri = f"mongodb://{MONGO_INITDB_ROOT_USERNAME}:{MONGO_INITDB_ROOT_PASSWORD}@{mongodb_ip}:27017/"
-
-mongo_client = MongoClient(mongo_uri)
-db = mongo_client['sensor_database']  # Nombre de la base de datos
-temperature_collection = db['temperatura']  # Colección para la temperatura
-humidity_collection = db['humedad']  # Colección para la humedad
-
-
-# Setup MongoDB connection
-mongo_client = MongoClient(mongo_uri)
-db = mongo_client['sensor_database']
+mongo_client = get_mongo_client()
+db = get_database(mongo_client, 'sensor_database')
 temperature_collection = db['temperatura']
 humidity_collection = db['humedad']
 
@@ -48,12 +34,7 @@ def on_message(client, userdata, msg):
         print(msg.topic + " " + payload)
         humidity_collection.insert({"humedad": float(payload)})
 
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_message = on_message
-
-client.connect(mqtt_broker, mqtt_port, 60)
-client.loop_start()
+client = create_mqtt_client(on_connect, on_message)
 
 def setup_temperature_routes(app):
     @app.route('/temperatura')
