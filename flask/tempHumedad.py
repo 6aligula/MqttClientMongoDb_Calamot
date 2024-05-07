@@ -1,11 +1,10 @@
+#tempHumedad.py
 from flask import Flask, jsonify
 import paho.mqtt.client as mqtt
 from pymongo import MongoClient
 import os
 
 # Carga las variables de entorno desde el archivo .env
-load_dotenv()
-
 app = Flask(__name__)
 
 # Configura los detalles del broker MQTT
@@ -56,21 +55,17 @@ client.on_message = on_message
 client.connect(mqtt_broker, mqtt_port, 60)
 client.loop_start()
 
-@app.route('/')
-def index():
-    return "MQTT to Flask Bridge"
+def setup_temperature_routes(app):
+    @app.route('/temperatura')
+    def get_temperature():
+        temperatures = temperature_collection.find().sort("_id", -1).limit(10)
+        # Convertir cada ObjectId a string
+        result = [{"temperatura": temp["temperatura"], "id": str(temp["_id"])} for temp in temperatures]
+        return jsonify(result)
 
-@app.route('/temperatura')
-def get_temperature():
-    temperatures = temperature_collection.find().sort("_id", -1).limit(10)
-    # Convertir cada ObjectId a string
-    result = [{"temperatura": temp["temperatura"], "id": str(temp["_id"])} for temp in temperatures]
-    return jsonify(result)
-
-
-@app.route('/humedad')
-def get_humidity():
-    # Recupera los últimos 10 registros de humedad
-    humidities = humidity_collection.find().sort("_id", -1).limit(10)
-    result = [{"humedad": temp["humedad"], "id": str(temp["_id"])} for temp in humidities]
-    return jsonify(result)
+    @app.route('/humedad')
+    def get_humidity():
+        # Recupera los últimos 10 registros de humedad
+        humidities = humidity_collection.find().sort("_id", -1).limit(10)
+        result = [{"humedad": temp["humedad"], "id": str(temp["_id"])} for temp in humidities]
+        return jsonify(result)
