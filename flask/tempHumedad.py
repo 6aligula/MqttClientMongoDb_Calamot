@@ -48,27 +48,29 @@ def calcular_mediana_temperatura():
     return mediana
 
 def get_last_humedad():
-    # Obtener el último registro de temperatura
-    ultimo_registro = humidity_collection.find().sort("_id", -1).limit(1)
+    # Obtener el último registro de humedad
+    ultimo_registro = list(humidity_collection.find().sort("_id", -1).limit(1))
     
     # Verificar si se encontró algún registro
-    if ultimo_registro.count() == 0:
+    if len(ultimo_registro) == 0:
         return jsonify({"error": "No se encontraron datos de humedad"})
 
-    # Acceder al primer (y único) elemento del cursor
-    ultimo_registro = list(ultimo_registro)[0]
-    return ultimo_registro["humedad"]
+    # Acceder al primer (y único) elemento de la lista
+    return ultimo_registro[0]["humedad"]
 
 def get_last_7_registros(collection):
     # Obtener los últimos 7 registros de una colección
     ultimos_7_registros = collection.find().sort("_id", -1).limit(7)
     
+    # Convertir a lista
+    registros_list = list(ultimos_7_registros)
+    
     # Verificar si se encontraron registros
-    if ultimos_7_registros.count() == 0:
+    if len(registros_list) == 0:
         return None
 
-    # Convertir a lista y devolver
-    return list(ultimos_7_registros)
+    # Devolver la lista
+    return registros_list
 
 # Callback que se llama cuando se recibe un mensaje del servidor.
 def on_message(client, userdata, msg):
