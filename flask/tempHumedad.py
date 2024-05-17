@@ -12,12 +12,14 @@ app = Flask(__name__)
 # Configura los detalles del broker MQTT
 temperatura_topic = os.getenv("TEMP_TOPIC")
 humedad_topic = os.getenv("HUME_TOPIC")
+humedad_tierra_topic = os.getenv("HUME_TIERRA_TOPIC")
 
 # Configuración de MongoDB modificada para usar variables de entorno
 mongo_client = get_mongo_client()
 db = get_database(mongo_client, 'sensor_database')
 temperature_collection = db['temperatura']
 humidity_collection = db['humedad']
+soil_humidity_collection = db['humedad_tierra']  # Nueva colección para humedad de la tierra
 
 # Callback para cuando el cliente recibe una CONNACK del servidor
 def on_connect(client, userdata, flags, rc):
@@ -99,6 +101,12 @@ def on_message(client, userdata, msg):
             humedad_ajustada = 70
         humidity_collection.insert_one({"humedad": humedad_ajustada})
 
+    elif msg.topic == humedad_tierra_topic:
+        print(msg.topic + " " + payload)
+        humedad_tierra = float(payload)
+        # Procesamiento adicional si es necesario
+        soil_humidity_collection.insert_one({"humedad_tierra": humedad_tierra})
+
 client = create_mqtt_client(on_connect, on_message)
 
 def setup_temperature_routes(app):
@@ -139,4 +147,14 @@ def setup_temperature_routes(app):
             "humedad": temp["humedad"],
             "timestamp": convert_utc_to_local(ObjectId(temp["_id"]).generation_time, local_tz)
         } for temp in humidities]
+        return jsonify(result)
+    
+    @app.route('/humedad/tierra')
+    def get_soil_humidity():
+        local_tz = pytz.timezone("Europe/Madrid")  # Reemplaza con tu zona horaria
+        soil_humidities = soil_humidity_collection.find().sort("_id", -1).limit(10)
+        result = [{
+            "humedad_tierra": temp["humedad_tierra"],
+            "timestamp": convert_utc_to_local(ObjectId(temp["_id"]).generation_time, local_tz)
+        } for temp in soil_humidities]
         return jsonify(result)
