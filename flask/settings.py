@@ -12,5 +12,6 @@ class Config:
     MQTT_BROKER = os.getenv("MQTT_BROKER")
     MQTT_USERNAME = os.getenv("MQTT_USERNAME")
     MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
-    ACTIVAR_TOPIC = os.getenv("ACTIVAR_TOPIC")
-    DESACTIVAR_TOPIC = os.getenv("DESACTIVAR_TOPIC")
+    MOTOR_TOPIC = os.getenv("MOTOR_TOPIC")
+    MOTOR_CONTROL_TOPIC = os.getenv("MOTOR_CONTROL_TOPIC")
+    HUME_TOPIC_TERRA = os.getenv("HUME_TOPIC_TERRA")
