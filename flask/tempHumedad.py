@@ -5,14 +5,10 @@ import os
 from db_config import get_mongo_client, get_database
 from bson.objectid import ObjectId
 import pytz
+from settings import Config
 
 # Carga las variables de entorno desde el archivo .env
 app = Flask(__name__)
-
-# Configura los detalles del broker MQTT
-temperatura_topic = os.getenv("TEMP_TOPIC")
-humedad_topic = os.getenv("HUME_TOPIC")
-humedad_tierra_topic = os.getenv("HUME_TOPIC_TERRA")
 
 # Configuración de MongoDB modificada para usar variables de entorno
 mongo_client = get_mongo_client()
@@ -24,8 +20,9 @@ soil_humidity_collection = db['humedad_tierra']  # Nueva colección para humedad
 # Callback para cuando el cliente recibe una CONNACK del servidor
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-    client.subscribe(temperatura_topic)
-    client.subscribe(humedad_topic)
+    client.subscribe(Config.TEMP_TOPIC)
+    client.subscribe(Config.HUME_TOPIC)
+    client.subscribe(Config.HUME_TOPIC_TERRA)
 
 def convert_utc_to_local(utc_dt, local_tz):
     local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
@@ -77,7 +74,7 @@ def get_last_7_registros(collection):
 # Callback que se llama cuando se recibe un mensaje del servidor.
 def on_message(client, userdata, msg):
     payload = msg.payload.decode('utf-8')
-    if msg.topic == temperatura_topic:
+    if msg.topic == Config.TEMP_TOPIC:
         print(msg.topic + " " + payload)
         temperatura = float(payload) - 5
 
@@ -92,7 +89,7 @@ def on_message(client, userdata, msg):
 
         temperature_collection.insert_one({"temperatura": temperatura})
 
-    elif msg.topic == humedad_topic:
+    elif msg.topic == Config.HUME_TOPIC:
         print(msg.topic + " " + payload)
         #Ajuste de humedad
         humedad_ajustada = float(payload) + 20
@@ -101,7 +98,7 @@ def on_message(client, userdata, msg):
             humedad_ajustada = 70
         humidity_collection.insert_one({"humedad": humedad_ajustada})
 
-    elif msg.topic == humedad_tierra_topic:
+    elif msg.topic == Config.HUME_TOPIC_TERRA:
         print(msg.topic + " " + payload)
         humedad_tierra = float(payload)
         # Procesamiento adicional si es necesario

@@ -15,3 +15,5 @@ class Config:
     MOTOR_TOPIC = os.getenv("MOTOR_TOPIC")
     MOTOR_CONTROL_TOPIC = os.getenv("MOTOR_CONTROL_TOPIC")
     HUME_TOPIC_TERRA = os.getenv("HUME_TOPIC_TERRA")
+    HUME_TOPIC = os.getenv("HUME_TOPIC")
+    TEMP_TOPIC = os.getenv("TEMP_TOPIC")
