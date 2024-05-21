@@ -43,8 +43,8 @@ def get_last_humedad():
     return ultimo_registro[0]["humedad"]
 
 def get_last_7_registros(collection):
-    registros = collection.find().sort("_id", -1).limit(7)
-    return list(registros) if registros.count() > 0 else None
+    registros = list(collection.find().sort("_id", -1).limit(7))
+    return registros if len(registros) > 0 else None
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode('utf-8')
