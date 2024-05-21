@@ -12,7 +12,7 @@ app = Flask(__name__)
 # Configura los detalles del broker MQTT
 temperatura_topic = os.getenv("TEMP_TOPIC")
 humedad_topic = os.getenv("HUME_TOPIC")
-humedad_tierra_topic = os.getenv("HUME_TIERRA_TOPIC")
+humedad_tierra_topic = os.getenv("HUME_TOPIC_TERRA")
 
 # Configuración de MongoDB modificada para usar variables de entorno
 mongo_client = get_mongo_client()
