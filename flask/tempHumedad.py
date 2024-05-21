@@ -27,7 +27,7 @@ def convert_utc_to_local(utc_dt, local_tz):
     return local_dt.strftime('%Y-%m-%d %H:%M:%S')
 
 def calcular_mediana_temperatura():
-    temperaturas = temperature_collection.find().sort("_id", -1).limit(7)
+    temperaturas = list(temperature_collection.find().sort("_id", -1).limit(7))
     valores = [temp["temperatura"] for temp in temperaturas]
     n = len(valores)
     if n == 0:
@@ -37,8 +37,8 @@ def calcular_mediana_temperatura():
     return mediana
 
 def get_last_humedad():
-    ultimo_registro = humidity_collection.find().sort("_id", -1).limit(1)
-    if ultimo_registro.count() == 0:
+    ultimo_registro = list(humidity_collection.find().sort("_id", -1).limit(1))
+    if len(ultimo_registro) == 0:
         return None
     return ultimo_registro[0]["humedad"]
 
@@ -99,7 +99,7 @@ def setup_temperature_routes(app):
     @app.route('/humedad')
     def get_humidity():
         local_tz = pytz.timezone("Europe/Madrid")
-        humidities = humidity_collection.find().sort("_id", -1).limit(10)
+        humidities = list(humidity_collection.find().sort("_id", -1).limit(10))
         result = [{
             "humedad": temp["humedad"],
             "timestamp": convert_utc_to_local(ObjectId(temp["_id"]).generation_time, local_tz)
@@ -109,7 +109,7 @@ def setup_temperature_routes(app):
     @app.route('/humedad/tierra')
     def get_soil_humidity():
         local_tz = pytz.timezone("Europe/Madrid")
-        soil_humidities = soil_humidity_collection.find().sort("_id", -1).limit(10)
+        soil_humidities = list(soil_humidity_collection.find().sort("_id", -1).limit(10))
         result = [{
             "humedad_tierra": temp["humedad_tierra"],
             "timestamp": convert_utc_to_local(ObjectId(temp["_id"]).generation_time, local_tz)
