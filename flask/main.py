@@ -70,11 +70,12 @@ def apagar_motor():
 
 @app.route('/motor/estado', methods=['GET'])
 def get_last_state():
-    if states_collection.count_documents({}) > 0:
-        last_state = states_collection.find().sort('_id', -1).limit(1)
-        return jsonify({"state": list(last_state)[0]['state']})
+    last_state = list(states_collection.find().sort('_id', -1).limit(1))
+    if len(last_state) > 0:
+        return jsonify({"state": last_state[0]['state']})
     else:
         return jsonify({"error": "No se encontraron datos"}), 404
+
 
 setup_temperature_routes(app)
 
