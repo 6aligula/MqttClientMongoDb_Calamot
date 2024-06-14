@@ -1,6 +1,6 @@
-#main.py
+# main.py
 import time
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 import threading
 from db_config import get_mongo_client, get_database
 from mqtt_config import create_mqtt_client, publish_message
@@ -83,6 +83,18 @@ def get_last_state():
     else:
         return jsonify({"error": "No se encontraron datos"}), 404
 
+@app.route('/motor/events', methods=['GET'])
+def motor_events():
+    def event_stream():
+        while True:
+            last_state = list(states_collection.find().sort('_id', -1).limit(1))
+            if len(last_state) > 0:
+                yield f"data: {last_state[0]['state']}\n\n"
+            else:
+                yield "data: No se encontraron datos\n\n"
+            time.sleep(5)
+
+    return Response(event_stream(), mimetype='text/event-stream')
 
 setup_temperature_routes(app)
 
