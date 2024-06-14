@@ -6,8 +6,10 @@ from db_config import get_mongo_client, get_database
 from mqtt_config import create_mqtt_client, publish_message
 from settings import Config
 from tempHumedad import setup_temperature_routes
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # Habilitar CORS para toda la aplicación
 
 mongo_client = get_mongo_client()
 db = get_database(mongo_client, 'motor_database')
