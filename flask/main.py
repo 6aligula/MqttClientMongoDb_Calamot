@@ -89,12 +89,16 @@ def motor_events():
         while True:
             last_state = list(states_collection.find().sort('_id', -1).limit(1))
             if len(last_state) > 0:
-                yield f"data: {last_state[0]['state']}\n\n"
+                state = last_state[0]['state']
+                print(f"Enviando estado: {state}")
+                yield f"data: {state}\n\n"
             else:
+                print("No se encontraron datos")
                 yield "data: No se encontraron datos\n\n"
             time.sleep(5)
 
     return Response(event_stream(), mimetype='text/event-stream')
+
 
 setup_temperature_routes(app)
 
