@@ -45,28 +45,35 @@ def schedule_shutdown(milliseconds):
     else:
         print("Failed to turn off motor.")
 
-@app.route('/motor/encender', methods=['POST'])
-def encender_motor():
-    seconds = request.args.get('seconds', default=0, type=int)
+def handle_motor_action(action, seconds):
     if seconds <= 0:
-        return jsonify({"success": False, "message": "No se puede encender el motor por 0 segundos o menos."}), 400
+        return jsonify({"success": False, "message": f"No se puede {action} el motor por 0 segundos o menos."}), 400
 
-    milliseconds = seconds * 200
-    if publish_message(client, Config.MOTOR_TOPIC, '1'):
+    milliseconds = seconds * 1000  # Convertir segundos a milisegundos
+    if action == "abrir":
+        message = '1'
+    elif action == "cerrar":
+        message = '2'
+    else:
+        return jsonify({"success": False, "message": "Acción inválida."}), 400
+
+    if publish_message(client, Config.MOTOR_TOPIC, message):
         if milliseconds > 0:
             timer = threading.Thread(target=schedule_shutdown, args=(milliseconds,))
             timer.start()
-        return jsonify({"success": True, "message": "Motorizando...", "shutdown_in": f"{milliseconds} milliseconds"}), 200
+        return jsonify({"success": True, "message": f"Motor {action}do...", "shutdown_in": f"{milliseconds} milliseconds"}), 200
     else:
-        return jsonify({"success": False, "message": "Failed to turn on dispenser"}), 500
+        return jsonify({"success": False, "message": f"Failed to {action} motor"}), 500
 
-@app.route('/motor/apagar', methods=['POST'])
-def apagar_motor():
-    try:
-        client.publish(Config.MOTOR_TOPIC, '0')
-        return jsonify({"success": True, "message": "Motor apagado"}), 200
-    except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+@app.route('/motor/abrir', methods=['POST'])
+def abrir_motor():
+    seconds = request.args.get('seconds', default=0, type=int)
+    return handle_motor_action("abrir", seconds)
+
+@app.route('/motor/cerrar', methods=['POST'])
+def cerrar_motor():
+    seconds = request.args.get('seconds', default=0, type=int)
+    return handle_motor_action("cerrar", seconds)
 
 @app.route('/motor/estado', methods=['GET'])
 def get_last_state():
