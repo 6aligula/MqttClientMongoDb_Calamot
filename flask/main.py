@@ -26,8 +26,9 @@ def on_message(client, userdata, msg):
     topic = msg.topic
     print(f"Message received on topic {msg.topic}: {payload}")
     if topic == Config.MOTOR_TOPIC:
-        commands_collection.insert_one({"action": payload})
-        print(f"Comando {payload} guardado en la base de datos")
+        command_time = time.time()  # Obtener el tiempo actual
+        commands_collection.insert_one({"action": payload, "time": command_time})
+        print(f"Comando {payload} guardado en la base de datos con tiempo {command_time}")
     elif topic == Config.MOTOR_CONTROL_TOPIC:
         states_collection.insert_one({"state": payload})
         print(f"Estado {payload} guardado en la base de datos")
@@ -90,13 +91,18 @@ def motor_events():
     def event_stream():
         while True:
             last_state = list(states_collection.find().sort('_id', -1).limit(1))
-            if len(last_state) > 0:
+            if last_state:
                 state = last_state[0]['state']
-                print(f"Enviando estado: {state}")
-                yield f"data: {state}\n\n"
+                last_command = list(commands_collection.find().sort('_id', -1).limit(1))
+                if last_command:
+                    command_time = last_command[0].get('time', 'No time data')
+                else:
+                    command_time = 'No time data'
+                print(f"Enviando estado: {state} con tiempo: {command_time}")
+                yield f"data: {{\"state\": \"{state}\", \"time\": \"{command_time}\"}}\n\n"
             else:
                 print("No se encontraron datos")
-                yield "data: No se encontraron datos\n\n"
+                yield "data: {\"state\": \"No se encontraron datos\", \"time\": \"No se encontraron datos\"}\n\n"
             time.sleep(5)
 
     return Response(event_stream(), mimetype='text/event-stream')
