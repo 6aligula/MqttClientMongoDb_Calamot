@@ -63,7 +63,7 @@ def handle_motor_action(action, seconds):
         if milliseconds > 0:
             timer = threading.Thread(target=schedule_shutdown, args=(milliseconds,))
             timer.start()
-        return jsonify({"success": True, "message": f"Motor {action}do...", "shutdown_in": f"{milliseconds} milliseconds"}), 200
+        return jsonify({"success": True, "message": f"{action}"}), 200
     else:
         return jsonify({"success": False, "message": f"Failed to {action} motor"}), 500
 
