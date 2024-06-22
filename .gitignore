@@ -16,3 +16,6 @@ server/log/*
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+data/mosquitto.db
+log/mosquitto.log
