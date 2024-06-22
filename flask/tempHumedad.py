@@ -50,7 +50,8 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode('utf-8')
     if msg.topic == Config.TEMP_TOPIC:
         print(msg.topic + " " + payload)
-        temperatura = float(payload) - 5
+        temperatura = float(payload) - 2
+        #print(f'temperatura: ${temperatura}')
         if temperatura <= 0:
             try:
                 temperatura = calcular_mediana_temperatura()
