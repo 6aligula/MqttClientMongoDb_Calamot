@@ -7,6 +7,7 @@ from mqtt_config import create_mqtt_client, publish_message
 from settings import Config
 from tempHumedad import setup_temperature_routes, calcular_mediana_temperatura
 from flask_cors import CORS
+from MotorConfig import MotorConfig
 
 app = Flask(__name__)
 CORS(app)  # Habilitar CORS para toda la aplicación
@@ -15,7 +16,7 @@ mongo_client = get_mongo_client()
 db = get_database(mongo_client, 'motor_database')
 commands_collection = db['comandos_calefaccion']
 states_collection = db['estados_calefaccion']
-# motor_state_collection = db['estado_motor']
+config = MotorConfig(db)
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
@@ -43,7 +44,7 @@ client = create_mqtt_client(on_connect, on_message)
 
 @app.route('/')
 def index():
-    return "MQTT to Flask Bridge"
+    return "Smart Garden Calamot"
 
 def get_operational_state():
     # Asegurar que se recupera el último documento de acción de control
@@ -117,10 +118,8 @@ def check_temperature_and_act():
     operational_state = get_operational_state() 
     print(f"Check thread is ok, state= {operational_state}") 
 
-    # Definir umbrales de temperatura
-    umbral_alto = 26.0
-    umbral_bajo = 22.0
-    segundos = 10  # Duración fija para la acción del motor
+    # Obtener los parámetros de la configuración de manera segura
+    umbral_alto, umbral_bajo, segundos = config.get()
  
     # Lógica basada en los umbrales y el estado actual
     if mediana >= umbral_alto:
@@ -185,28 +184,29 @@ def auto_control_motor():
         return jsonify({"success": False, "message": "Formato de solicitud incorrecto, se espera JSON."}), 400
 
     data = request.get_json()
-    temperatura = data.get('temperatura')
+    umbral_alto = data.get('umbral_alto')
+    umbral_bajo = data.get('umbral_bajo')
+    segundos = data.get('segundos')
 
-    # Verifica que la temperatura se haya proporcionado y sea un número
-    if temperatura is None or not isinstance(temperatura, (int, float)):
-        return jsonify({"success": False, "message": "Parámetro de temperatura inválido o ausente."}), 400
+    if umbral_alto is None or umbral_bajo is None or segundos is None:
+        return jsonify({"success": False, "message": "Parámetros necesarios no proporcionados."}), 400
 
-    # Definir umbrales de temperatura
-    umbral_alto = 28.0
-    umbral_bajo = 18.0
-    segundos = 5  # Duración fija para la acción del motor
+    print(f"Configuración recibida correctamente. { umbral_alto, umbral_bajo, segundos}")
+    
+    # Actualizar la configuración de manera segura
+    config.update(umbral_alto, umbral_bajo, segundos)
+    
+    # Logic to handle motor action based on temperature and thresholds
+    return jsonify({"success": True, "message": "Configuración recibida correctamente."})
 
-    # Lógica basada en los umbrales
-    if temperatura >= umbral_alto:
-        # La temperatura supera el umbral alto, se abre el motor
-        return handle_motor_action('abrir', segundos)
-    elif temperatura < umbral_bajo:
-        # La temperatura está por debajo del umbral bajo, se cierra el motor
-        return handle_motor_action('cerrar', segundos)
-    else:
-        # La temperatura está entre los umbrales, no se hace nada
-        return jsonify({"success": True, "message": f"La temperatura de {temperatura}°C no requiere acción."}), 200
-
+@app.route('/motor/get_config', methods=['GET'])
+def get_config():
+    umbral_alto, umbral_bajo, segundos = config.get()
+    return jsonify({
+        "umbral_alto": umbral_alto,
+        "umbral_bajo": umbral_bajo,
+        "segundos": segundos
+    })
 
 setup_temperature_routes(app)
 
