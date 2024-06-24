@@ -32,13 +32,15 @@ services:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./data:/mosquitto/data
-      - ./log:/mosquitto/log
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
     networks:
       - mi_red_comun
 
 volumes:
   mongodb_data:
+  mosquitto_data:
+  mosquitto_log:
 
 networks:
   mi_red_comun:
