@@ -46,6 +46,12 @@ client = create_mqtt_client(on_connect, on_message)
 def index():
     return "Smart Garden Calamot"
 
+def get_motor_duration():
+    config_data = db['configuracion_motor'].find_one({}, projection={'segundos': 1})
+    if config_data and 'segundos' in config_data:
+        return config_data['segundos']
+    return 0  # Valor predeterminado en caso de que no se encuentre el documento
+
 def get_operational_state():
     # Asegurar que se recupera el último documento de acción de control
     state_data = states_collection.find_one(
@@ -106,7 +112,6 @@ def handle_motor_action(action, seconds, from_thread=False):
         else:
             return jsonify({"success": False, "message": failure_message}), 500
 
-
 def check_temperature_and_act():
     try:
         mediana = calcular_mediana_temperatura()
@@ -123,7 +128,7 @@ def check_temperature_and_act():
  
     # Lógica basada en los umbrales y el estado actual
     if mediana >= umbral_alto:
-        if operational_state != 'abrir':  # Solo abrir si no ha sido abierta recientemente
+        if operational_state != 'abrir':
             handle_motor_action('abrir', segundos, from_thread=True)
     elif mediana < umbral_bajo:
         if operational_state != 'cerrar':
@@ -160,22 +165,18 @@ def get_last_state():
 def motor_events():
     def event_stream():
         while True:
-            last_state = list(states_collection.find().sort('_id', -1).limit(1))
-            if last_state:
-                state = last_state[0]['state']
-                last_command = list(commands_collection.find().sort('_id', -1).limit(1))
-                if last_command:
-                    command_time = last_command[0].get('time', 'No time data')
-                else:
-                    command_time = 'No time data'
-                print(f"Enviando estado: {state} con tiempo: {command_time}")
-                yield f"data: {{\"state\": \"{state}\", \"time\": \"{command_time}\"}}\n\n"
+            state = get_operational_state()
+            duration = get_motor_duration()
+            if state:
+                print(f"Enviando estado: {state} con duración: {duration}")
+                yield f"data: {{\"state\": \"{state}\", \"duration\": {duration}}}\n\n"
             else:
                 print("No se encontraron datos")
-                yield "data: {\"state\": \"No se encontraron datos\", \"time\": \"No se encontraron datos\"}\n\n"
+                yield "data: {\"state\": \"No se encontraron datos\", \"duration\": 0}}\n\n"
             time.sleep(5)
 
     return Response(event_stream(), mimetype='text/event-stream')
+
 
 @app.route('/motor/autocontrol', methods=['POST'])
 def auto_control_motor():
