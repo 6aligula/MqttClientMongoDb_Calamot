@@ -12,6 +12,8 @@ services:
       - ./.env  # Ruta del archivo .env
     environment:
       - mongodb_ip=mongodb
+    volumes:
+      - ./logs:/app/logs  # Monta un directorio de logs del host en el contenedor
     networks:
       - mi_red_comun
 

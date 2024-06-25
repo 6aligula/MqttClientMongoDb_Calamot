@@ -8,8 +8,24 @@ from settings import Config
 from tempHumedad import setup_temperature_routes, calcular_mediana_temperatura
 from flask_cors import CORS
 from MotorConfig import MotorConfig
+import logging
+from logging.handlers import RotatingFileHandler
+
+# Configuración básica del logging
+logging.basicConfig(level=logging.INFO)  # Cambia a logging.DEBUG para más detalles si es necesario
+
+# Configuración del handler para guardar los logs en un archivo, con rotación automática
+handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Agregar el handler al logger principal
+logging.getLogger().addHandler(handler)
 
 app = Flask(__name__)
+# Para uso en Flask
+app.logger.addHandler(handler)
+
 CORS(app)  # Habilitar CORS para toda la aplicación
 
 mongo_client = get_mongo_client()
@@ -19,18 +35,18 @@ states_collection = db['estados_calefaccion']
 config = MotorConfig(db)
 
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code " + str(rc))
+    logging.info("Connected with result code " + str(rc))
     client.subscribe(Config.MOTOR_TOPIC)
     client.subscribe(Config.MOTOR_CONTROL_TOPIC)
 
 def on_message(client, userdata, msg):
     payload = msg.payload.decode('utf-8')
     topic = msg.topic
-    print(f"Message received on topic {msg.topic}: {payload}")
+    logging.info(f"Message received on topic {msg.topic}: {payload}")
     if topic == Config.MOTOR_TOPIC:
         command_time = time.time()  # Obtener el tiempo actual
         commands_collection.insert_one({"action": payload, "time": command_time})
-        print(f"Comando {payload} guardado en la base de datos con tiempo {command_time}")
+        logging.info(f"Comando {payload} guardado en la base de datos con tiempo {command_time}")
         #update_motor_state(payload, command_time)
     elif topic == Config.MOTOR_CONTROL_TOPIC:
         states_collection.insert_one({
@@ -38,7 +54,7 @@ def on_message(client, userdata, msg):
             "state": payload,
             "time": time.time()
         })
-        print(f"Estado {payload} guardado en la base de datos")
+        logging.info(f"Estado {payload} guardado en la base de datos")
 
 client = create_mqtt_client(on_connect, on_message)
 
@@ -63,18 +79,18 @@ def get_operational_state():
 
 def schedule_shutdown(milliseconds):
     seconds = milliseconds / 1000
-    print(f"Scheduling shutdown in {milliseconds} milliseconds")
+    logging.info(f"Scheduling shutdown in {milliseconds} milliseconds")
     time.sleep(seconds)
     if publish_message(client, Config.MOTOR_TOPIC, '0'):
-        print("Motor turned off successfully.")
+        logging.info("Motor turned off successfully.")
     else:
-        print("Failed to turn off motor.")
+        logging.info("Failed to turn off motor.")
 
 def handle_motor_action(action, seconds, from_thread=False):
     if seconds <= 0:
         message = f"No se puede {action} el motor por 0 segundos o menos."
         if from_thread:
-            print(message)
+            logging.error(message)
         else:
             return jsonify({"success": False, "message": message}), 400
 
@@ -92,7 +108,7 @@ def handle_motor_action(action, seconds, from_thread=False):
         message = '2'
     else:
         if from_thread:
-            print("Acción inválida.")
+            logging.error("Acción inválida.")
         else:
             return jsonify({"success": False, "message": "Acción inválida."}), 400
 
@@ -102,26 +118,26 @@ def handle_motor_action(action, seconds, from_thread=False):
             timer.start()
         success_message = f"{action.capitalize()} motor"
         if from_thread:
-            print(success_message)
+            logging.info(success_message)
         else:
             return jsonify({"success": True, "message": success_message}), 200
     else:
         failure_message = f"Failed to {action} motor"
         if from_thread:
-            print(failure_message)
+            logging.error(failure_message)
         else:
             return jsonify({"success": False, "message": failure_message}), 500
 
 def check_temperature_and_act():
     try:
         mediana = calcular_mediana_temperatura()
-        print(f"Mediana de temperatura: {mediana}")
+        logging.info(f"Mediana de temperatura: {mediana}")
     except ValueError:
-        print("No se encontraron datos suficientes")
+        logging.error("No se encontraron datos suficientes")
         return
 
     operational_state = get_operational_state() 
-    print(f"Check thread is ok, state= {operational_state}") 
+    logging.info(f"Check thread is ok, state= {operational_state}") 
 
     # Obtener los parámetros de la configuración de manera segura
     umbral_alto, umbral_bajo, segundos = config.get()
@@ -132,10 +148,10 @@ def check_temperature_and_act():
             handle_motor_action('abrir', segundos, from_thread=True)
     elif mediana < umbral_bajo:
         if operational_state != 'cerrar':
-            print("Temperatura por debajo del umbral bajo, cerrando motor")
+            logging.info("Temperatura por debajo del umbral bajo, cerrando motor")
             handle_motor_action('cerrar', segundos, from_thread=True)
     else:
-        print(f"Temperatura dentro de los umbrales alto {umbral_alto} y bajo {umbral_bajo}, no se toma acción")
+        logging.info(f"Temperatura dentro de los umbrales alto {umbral_alto} y bajo {umbral_bajo}, no se toma acción")
 
 def autonomous_check(interval=60):
     while True:
@@ -168,10 +184,10 @@ def motor_events():
             state = get_operational_state()
             duration = get_motor_duration()
             if state:
-                print(f"Enviando estado: {state} con duración: {duration}")
+                logging.info(f"Enviando estado: {state} con duración: {duration}")
                 yield f"data: {{\"state\": \"{state}\", \"duration\": {duration}}}\n\n"
             else:
-                print("No se encontraron datos")
+                logging.error("No se encontraron datos")
                 yield "data: {\"state\": \"No se encontraron datos\", \"duration\": 0}}\n\n"
             time.sleep(5)
 
@@ -192,7 +208,7 @@ def auto_control_motor():
     if umbral_alto is None or umbral_bajo is None or segundos is None:
         return jsonify({"success": False, "message": "Parámetros necesarios no proporcionados."}), 400
 
-    print(f"Configuración recibida correctamente. { umbral_alto, umbral_bajo, segundos}")
+    logging.info(f"Configuración recibida correctamente. { umbral_alto, umbral_bajo, segundos}")
     
     # Actualizar la configuración de manera segura
     config.update(umbral_alto, umbral_bajo, segundos)

@@ -6,8 +6,23 @@ from db_config import get_mongo_client, get_database
 from bson.objectid import ObjectId
 import pytz
 from settings import Config
+import logging
+from logging.handlers import RotatingFileHandler
+
+# Configuración básica del logging
+logging.basicConfig(level=logging.INFO)  # Cambia a logging.DEBUG para más detalles si es necesario
+
+# Configuración del handler para guardar los logs en un archivo, con rotación automática
+handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+# Agregar el handler al logger principal
+logging.getLogger().addHandler(handler)
 
 app = Flask(__name__)
+# Para uso en Flask
+app.logger.addHandler(handler)
 
 # Configuración de MongoDB
 mongo_client = get_mongo_client()
@@ -17,7 +32,7 @@ humidity_collection = db['humedad']
 soil_humidity_collection = db['humedad_tierra']
 
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code " + str(rc))
+    logging.info("Connected with result code " + str(rc))
     client.subscribe(Config.TEMP_TOPIC)
     client.subscribe(Config.HUME_TOPIC)
     client.subscribe(Config.HUME_TOPIC_TERRA)
@@ -49,24 +64,24 @@ def get_last_7_registros(collection):
 def on_message(client, userdata, msg):
     payload = msg.payload.decode('utf-8')
     if msg.topic == Config.TEMP_TOPIC:
-        print(msg.topic + " " + payload)
+        logging.info(msg.topic + " " + payload)
         temperatura = float(payload) - 2
         #print(f'temperatura: ${temperatura}')
         if temperatura <= 0:
             try:
                 temperatura = calcular_mediana_temperatura()
             except ValueError:
-                print("Mediana no disponible, usando valor por defecto")
+                logging.info("Mediana no disponible, usando valor por defecto")
                 temperatura = 18
         temperature_collection.insert_one({"temperatura": temperatura})
     elif msg.topic == Config.HUME_TOPIC:
-        print(msg.topic + " " + payload)
+        logging.info(msg.topic + " " + payload)
         humedad_ajustada = float(payload) + 20
         if humedad_ajustada > 90:
             humedad_ajustada = 70
         humidity_collection.insert_one({"humedad": humedad_ajustada})
     elif msg.topic == Config.HUME_TOPIC_TERRA:
-        print(msg.topic + " " + payload)
+        logging.info(msg.topic + " " + payload)
         humedad_tierra = float(payload)
         soil_humidity_collection.insert_one({"humedad_tierra": humedad_tierra})
 
