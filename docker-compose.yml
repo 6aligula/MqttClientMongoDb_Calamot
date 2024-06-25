@@ -5,7 +5,7 @@ services:
     build:
       context: ./flask
     ports:
-      - "5000:5000"
+      - "5001:5002"
     depends_on:
       - mongodb
     env_file:  # Añadir esta línea para especificar la ubicación del archivo .env
