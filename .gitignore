@@ -19,3 +19,5 @@ server/log/*
 
 data/mosquitto.db
 log/mosquitto.log
+
+logs/app.log*

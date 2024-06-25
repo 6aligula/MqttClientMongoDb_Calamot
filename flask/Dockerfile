@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV PYTHONUNBUFFERED 1
 
 # Expone el puerto en el que se ejecutará la aplicación
-EXPOSE 5000
+EXPOSE 5002
 
 # Comando para ejecutar la aplicación
 CMD ["python", "./main.py"]

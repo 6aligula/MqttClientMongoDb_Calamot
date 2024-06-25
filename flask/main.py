@@ -233,4 +233,4 @@ if __name__ == '__main__':
     autonomous_thread.daemon = True  # Permitir que el hilo se cierre al cerrar la aplicación
     autonomous_thread.start()
 
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5002)
