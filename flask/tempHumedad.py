@@ -13,7 +13,7 @@ from logging.handlers import RotatingFileHandler
 logging.basicConfig(level=logging.INFO)  # Cambia a logging.DEBUG para más detalles si es necesario
 
 # Configuración del handler para guardar los logs en un archivo, con rotación automática
-handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=3)
+handler = RotatingFileHandler('/app/logs/app.log', maxBytes=10000, backupCount=3)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 
