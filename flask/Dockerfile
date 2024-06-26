@@ -21,5 +21,8 @@ ENV PYTHONUNBUFFERED 1
 # Expone el puerto en el que se ejecutará la aplicación
 EXPOSE 5002
 
+# Comando para ejecutar la aplicación usando Gunicorn
+CMD ["gunicorn", "-w 4", "-b 0.0.0.0:5002", "main:app"]
+
 # Comando para ejecutar la aplicación
-CMD ["python", "./main.py"]
+#CMD ["python", "./main.py"]
