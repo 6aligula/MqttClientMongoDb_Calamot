@@ -232,5 +232,3 @@ if __name__ == '__main__':
     autonomous_thread = threading.Thread(target=autonomous_check, args=(15,))  # Verificar cada 60 segundos
     autonomous_thread.daemon = True  # Permitir que el hilo se cierre al cerrar la aplicación
     autonomous_thread.start()
-
-    app.run(debug=False, host='0.0.0.0', port=5002)
