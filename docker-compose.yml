@@ -1,6 +1,16 @@
 version: '3.9'
 
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"  # Redirigir el puerto 80 del host al puerto 80 del contenedor
+    volumes:
+      - ./nginx:/etc/nginx/conf.d  # Montar el directorio nginx para la configuración personalizada
+    depends_on:
+      - api
+    networks:
+      - mi_red_comun
   api:
     build:
       context: ./flask
@@ -43,6 +53,8 @@ volumes:
   mongodb_data:
   mosquitto_data:
   mosquitto_log:
+  nginx_log:
+    driver: local
 
 networks:
   mi_red_comun:
