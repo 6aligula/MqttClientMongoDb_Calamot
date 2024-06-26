@@ -24,5 +24,3 @@ ENV PYTHONUNBUFFERED 1
 # Comando para ejecutar la aplicación usando Gunicorn
 CMD ["gunicorn", "-w 1", "-b 0.0.0.0:5002", "main:app"]
 
-# Comando para ejecutar la aplicación
-#CMD ["python", "./main.py"]
