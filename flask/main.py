@@ -7,6 +7,8 @@ from mqtt_config import create_mqtt_client, publish_message
 from settings import Config
 from tempHumedad import setup_temperature_routes, calcular_mediana_temperatura
 from flask_cors import CORS
+from flask_socketio import SocketIO
+import eventlet
 from MotorConfig import MotorConfig
 import logging
 from logging.handlers import RotatingFileHandler
@@ -27,6 +29,8 @@ app = Flask(__name__)
 app.logger.addHandler(handler)
 
 CORS(app)  # Habilitar CORS para toda la aplicación
+eventlet.monkey_patch()
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 mongo_client = get_mongo_client()
 db = get_database(mongo_client, 'motor_database')
@@ -58,6 +62,22 @@ def on_message(client, userdata, msg):
 
 client = create_mqtt_client(on_connect, on_message)
 
+@socketio.on('connect')
+def handle_connect():
+    logging.info('Client connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    logging.info('Client disconnected')
+
+# Función para emitir el estado del motor
+def emit_motor_state(state, duration):
+    if not state or duration is None:
+        state = 'error'
+        duration = 1
+    socketio.emit('motor_state', {'state': state, 'duration': duration})
+
+
 @app.route('/')
 def index():
     return "Smart Garden Calamot"
@@ -66,7 +86,7 @@ def get_motor_duration():
     config_data = db['configuracion_motor'].find_one({}, projection={'segundos': 1})
     if config_data and 'segundos' in config_data:
         return config_data['segundos']
-    return 0  # Valor predeterminado en caso de que no se encuentre el documento
+    return 10  # Valor predeterminado en caso de que no se encuentre el documento
 
 def get_operational_state():
     # Asegurar que se recupera el último documento de acción de control
@@ -75,7 +95,7 @@ def get_operational_state():
         sort=[('_id', -1)],
         projection={'action_state': 1}
     )
-    return state_data['action_state'] if state_data else None
+    return state_data['action_state'] if state_data else 'cerrar'
 
 def schedule_shutdown(milliseconds):
     seconds = milliseconds / 1000
@@ -117,6 +137,7 @@ def handle_motor_action(action, seconds, from_thread=False):
             timer = threading.Thread(target=schedule_shutdown, args=(milliseconds,))
             timer.start()
         success_message = f"{action.capitalize()} motor"
+        emit_motor_state(action, seconds)  # Emitir estado del motor
         if from_thread:
             logging.info(success_message)
         else:
@@ -133,7 +154,7 @@ def check_temperature_and_act():
         mediana = calcular_mediana_temperatura()
         logging.info(f"Mediana de temperatura: {mediana}")
     except ValueError:
-        logging.error("No se encontraron datos suficientes")
+        logging.error("No se encontraron datos suficientes para calcular la mediana.")
         return
 
     operational_state = get_operational_state() 
@@ -154,9 +175,11 @@ def check_temperature_and_act():
         logging.info(f"Temperatura dentro de los umbrales alto {umbral_alto} y bajo {umbral_bajo}, no se toma acción")
 
 def autonomous_check(interval=60):
+    logging.info("Iniciando verificación de temperatura.")
     while True:
         check_temperature_and_act()
         time.sleep(interval)
+
 
 #endpoints
 @app.route('/motor/abrir', methods=['POST'])
@@ -179,20 +202,14 @@ def get_last_state():
 
 @app.route('/motor/events', methods=['GET'])
 def motor_events():
-    def event_stream():
-        while True:
-            state = get_operational_state()
-            duration = get_motor_duration()
-            if state:
-                logging.info(f"Enviando estado: {state} con duración: {duration}")
-                yield f"data: {{\"state\": \"{state}\", \"duration\": {duration}}}\n\n"
-            else:
-                logging.error("No se encontraron datos")
-                yield "data: {\"state\": \"No se encontraron datos\", \"duration\": 0}}\n\n"
-            time.sleep(5)
-
-    return Response(event_stream(), mimetype='text/event-stream')
-
+    state = get_operational_state()
+    duration = get_motor_duration()
+    if state:
+        logging.info(f"Enviando estado: {state} con duración: {duration}")
+        return jsonify({"state": state, "duration": duration})
+    else:
+        logging.error("No se encontraron datos")
+        return Response({"state": "no hay datos", "duration": "0"})
 
 @app.route('/motor/autocontrol', methods=['POST'])
 def auto_control_motor():
@@ -225,10 +242,18 @@ def get_config():
         "segundos": segundos
     })
 
+def start_autonomous_check():
+    logging.info("Iniciando la aplicación Flask")
+    # Iniciar el hilo para la verificación autónoma de la temperatura
+    autonomous_thread = threading.Thread(target=autonomous_check, args=(15,))  # Verificar cada 15 segundos
+    autonomous_thread.daemon = True  # Permitir que el hilo se cierre al cerrar la aplicación
+    logging.info("Iniciando el hilo de verificación autónoma")
+    autonomous_thread.start()
+
 setup_temperature_routes(app)
+# Llama a la función cuando se importa el módulo
+start_autonomous_check()
 
 if __name__ == '__main__':
-    # Iniciar el hilo para la verificación autónoma de la temperatura
-    autonomous_thread = threading.Thread(target=autonomous_check, args=(15,))  # Verificar cada 60 segundos
-    autonomous_thread.daemon = True  # Permitir que el hilo se cierre al cerrar la aplicación
-    autonomous_thread.start()
+    pass
+    #socketio.run(app, host='0.0.0.0', port=5002)

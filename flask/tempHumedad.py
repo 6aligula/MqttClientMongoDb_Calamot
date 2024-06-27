@@ -46,6 +46,7 @@ def calcular_mediana_temperatura():
     valores = [temp["temperatura"] for temp in temperaturas]
     n = len(valores)
     if n == 0:
+        #logging.info("No hay suficientes datos para calcular la mediana")
         raise ValueError("No hay suficientes datos para calcular la mediana")
     valores.sort()
     mediana = valores[n // 2] if n % 2 != 0 else (valores[n // 2 - 1] + valores[n // 2]) / 2
