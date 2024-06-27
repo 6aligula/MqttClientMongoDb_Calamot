@@ -22,5 +22,4 @@ ENV PYTHONUNBUFFERED 1
 # EXPOSE 5002
 
 # Comando para ejecutar la aplicación usando Gunicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5002", "--workers", "4"]
-
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5002", "main:app"]
