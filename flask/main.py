@@ -78,7 +78,7 @@ def emit_motor_state(state, duration):
     socketio.emit('motor_state', {'state': state, 'duration': duration})
 
 
-@app.route('/')
+@app.route('/api')
 def index():
     return "Smart Garden Calamot"
 
@@ -182,17 +182,17 @@ def autonomous_check(interval=60):
 
 
 #endpoints
-@app.route('/motor/abrir', methods=['POST'])
+@app.route('/api/motor/abrir', methods=['POST'])
 def abrir_motor():
     seconds = request.args.get('seconds', default=0, type=int)
     return handle_motor_action("abrir", seconds)
 
-@app.route('/motor/cerrar', methods=['POST'])
+@app.route('/api/motor/cerrar', methods=['POST'])
 def cerrar_motor():
     seconds = request.args.get('seconds', default=0, type=int)
     return handle_motor_action("cerrar", seconds)
 
-@app.route('/motor/estado', methods=['GET'])
+@app.route('/api/motor/estado', methods=['GET'])
 def get_last_state():
     last_state = list(states_collection.find().sort('_id', -1).limit(1))
     if len(last_state) > 0:
@@ -200,7 +200,7 @@ def get_last_state():
     else:
         return jsonify({"error": "No se encontraron datos"}), 404
 
-@app.route('/motor/events', methods=['GET'])
+@app.route('/api/motor/events', methods=['GET'])
 def motor_events():
     state = get_operational_state()
     duration = get_motor_duration()
@@ -211,7 +211,7 @@ def motor_events():
         logging.error("No se encontraron datos")
         return Response({"state": "no hay datos", "duration": "0"})
 
-@app.route('/motor/autocontrol', methods=['POST'])
+@app.route('/api/motor/autocontrol', methods=['POST'])
 def auto_control_motor():
     # Asegúrate de que la solicitud contiene JSON
     if not request.is_json:
@@ -233,7 +233,7 @@ def auto_control_motor():
     # Logic to handle motor action based on temperature and thresholds
     return jsonify({"success": True, "message": "Configuración recibida correctamente."})
 
-@app.route('/motor/get_config', methods=['GET'])
+@app.route('/api/motor/get_config', methods=['GET'])
 def get_config():
     umbral_alto, umbral_bajo, segundos = config.get()
     return jsonify({

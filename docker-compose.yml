@@ -2,31 +2,37 @@ version: '3.9'
 
 services:
   nginx:
-    image: nginx:latest
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nginx
     ports:
-      - "80:80"  # Redirigir el puerto 80 del host al puerto 80 del contenedor
+      - "80:80"
     volumes:
-      - ./nginx:/etc/nginx/conf.d  # Montar el directorio nginx para la configuración personalizada
+      - ./logs/nginx:/var/log/nginx
     depends_on:
       - api
     networks:
       - mi_red_comun
+
   api:
     build:
       context: ./flask
+    container_name: api
     depends_on:
       - mongodb
-    env_file:  # Añadir esta línea para especificar la ubicación del archivo .env
-      - ./.env  # Ruta del archivo .env
+    env_file:
+      - ./.env
     environment:
       - mongodb_ip=mongodb
     volumes:
-      - ./logs:/app/logs  # Monta un directorio de logs del host en el contenedor
+      - ./logs:/app/logs
     networks:
       - mi_red_comun
 
   mongodb:
     image: mongo:4.4
+    container_name: mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -56,4 +62,3 @@ volumes:
 
 networks:
   mi_red_comun:
-    driver: bridge

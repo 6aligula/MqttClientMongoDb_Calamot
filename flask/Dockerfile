@@ -18,9 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # especialmente aquellas donde la inmediatez de la salida de logs es importante. 
 ENV PYTHONUNBUFFERED 1
 
-# Expone el puerto en el que se ejecutará la aplicación
-# EXPOSE 5002
-
 # Comando para ejecutar la aplicación usando Gunicorn
 # CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:5002", "main:app"]
 CMD ["gunicorn", "-k", "eventlet", "-w", "1", "-b", "0.0.0.0:5002", "main:app"]

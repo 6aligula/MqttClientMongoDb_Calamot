@@ -1,0 +1,23 @@
+.motor-animation-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    height: 30px;
+    margin-top: 10px;
+}
+
+.motor-animation {
+    height: 100%;
+    background-color: green;
+}
+
+.motor-animation.abrir {
+    background-color: green;
+}
+
+.motor-animation.cerrar {
+    background-color: red;
+}

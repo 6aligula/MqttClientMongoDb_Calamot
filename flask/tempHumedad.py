@@ -89,7 +89,7 @@ def on_message(client, userdata, msg):
 client = create_mqtt_client(on_connect, on_message)
 
 def setup_temperature_routes(app):
-    @app.route('/temperatura')
+    @app.route('/api/temperatura')
     def get_temperature():
         local_tz = pytz.timezone("Europe/Madrid")
         try:
@@ -113,7 +113,7 @@ def setup_temperature_routes(app):
         }
         return jsonify(result)
 
-    @app.route('/humedad')
+    @app.route('/api/humedad')
     def get_humidity():
         local_tz = pytz.timezone("Europe/Madrid")
         humidities = list(humidity_collection.find().sort("_id", -1).limit(10))
@@ -123,7 +123,7 @@ def setup_temperature_routes(app):
         } for temp in humidities]
         return jsonify(result)
     
-    @app.route('/humedad/tierra')
+    @app.route('/api/humedad/tierra')
     def get_soil_humidity():
         local_tz = pytz.timezone("Europe/Madrid")
         soil_humidities = list(soil_humidity_collection.find().sort("_id", -1).limit(10))
