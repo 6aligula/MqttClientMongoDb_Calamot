@@ -1,4 +1,12 @@
 └── 📁MqttClientMongoDb_Calamot
+    └── arduino
+        ├── dht11_mqtt
+        │   └── dht11_mqtt.ino
+        ├── motor_esp8266
+        │   └── motor_esp8266.ino
+        └── sensor_humedad
+            ├── notes.md
+            └── sensor_humedad.ino
     └── .env
     └── .gitignore
     └── Dockerfile
@@ -15,13 +23,13 @@
         └── requirements.txt
         └── settings.py
         └── tempHumedad.py
-    └── 📁frontend  # Nuevo directorio para la app React
+    └── 📁frontend
         └── Dockerfile
         └── public
         └── src
         └── package.json
         └── package-lock.json
+        └── 📁nginx
+            └── default.conf
     └── 📁logs
         └── app.log
-    └── 📁nginx
-        └── default.conf
